@@ -1,0 +1,66 @@
+import io.appium.java_client.AppiumBy;
+import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.android.options.UiAutomator2Options;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.time.Duration;
+import java.util.ArrayList;
+
+public class HybridAppTest {
+    private AndroidDriver driver;
+    private static final String APP_ANDROID = "https://github.com/cloudgrey-io/the-app/releases/download/v1.9.0/TheApp-v1.9.0.apk";
+    private static final String APPIUM = "http://localhost:4723";
+
+    @BeforeTest
+    public void setUp() throws MalformedURLException {
+        UiAutomator2Options options = new UiAutomator2Options();
+        options.setPlatformName("Android");
+        options.setAutomationName("UiAutomator2");
+        options.setPlatformVersion("13.0");
+        options.setDeviceName("1361521842000MR");
+        options.setAutoGrantPermissions(true);
+        options.setApp(APP_ANDROID);
+        options.setNoReset(true);
+
+        driver = new AndroidDriver(
+                new URL(APPIUM),
+                options
+        );
+
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+    }
+    private String getWebContext(AndroidDriver driver) {
+        ArrayList<String> contexts = new ArrayList<>(driver.getContextHandles());
+        for (String context : contexts) {
+            if (!context.equals("NATIVE_APP")) {
+                return context;
+            }
+        }
+        return null;
+    }
+    @Test
+    public void testHybridApp() throws InterruptedException {
+        driver.findElement(AppiumBy.accessibilityId("Webview Demo")).click();
+
+        driver.findElement(AppiumBy.accessibilityId("urlInput")).sendKeys("https://appiumpro.com");
+        driver.findElement(AppiumBy.accessibilityId("navigateBtn")).click();
+        System.out.println(driver.getContext());
+        Thread.sleep(1000);
+        driver.context(getWebContext(driver));
+        System.out.println(driver.getContext());
+        driver.get("https://cloudgrey.io");
+        assert driver.getTitle().equals("Cloud Grey: Appium Delivered");
+
+    }
+
+    @AfterTest
+    public void tearDown(){
+        if(driver != null){
+            driver.quit();
+        }
+    }
+}
